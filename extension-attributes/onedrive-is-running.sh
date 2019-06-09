@@ -2,7 +2,7 @@
 
 #
 # Checks if OneDrive is running
-#
+# 
 
 if [[ ! $(/usr/bin/pgrep "OneDrive") ]]; then 
 	echo "<result>No</result>"
