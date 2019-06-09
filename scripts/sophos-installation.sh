@@ -2,7 +2,7 @@
 
 #
 # Sophos Installation Script
-#
+# 
 # Assumes pre-deployment of Sophos Installer.app to 
 # /usr/local/deploy/sophos/
 #
