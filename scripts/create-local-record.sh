@@ -6,6 +6,8 @@
 # Creates a local XML record with JSS information from Jamf: id, udid, serial, mac address, asset tag,
 # username and name, email and department - for later use in scripts and automation.
 #
+# Script by soundsnw 2019
+#
 
 # Prerequisites:
 # - Jamf API User w/ Read Permssion for Computer Objects
