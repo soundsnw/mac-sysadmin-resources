@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#
+# 
 # Jamf Extension Attribute
 #
 # Checks if OneDrive is configured by seeing if the OneDrive folder is present, which would be the case after initial configuration.
