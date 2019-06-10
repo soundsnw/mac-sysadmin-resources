@@ -33,7 +33,7 @@
 
 # Find serial number
 
-serial=`/usr/sbin/system_profiler SPHardwareDataType | /usr/bin/awk '/Serial\ Number\ \(system\)/ {print $NF}'`
+serial=$( /usr/sbin/system_profiler SPHardwareDataType | /usr/bin/awk '/Serial\ Number\ (system)/ {print $NF}')
 
 mkdir /usr/local/records
 
