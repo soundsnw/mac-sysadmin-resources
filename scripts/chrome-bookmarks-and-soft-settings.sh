@@ -66,7 +66,7 @@ sudo cat <<'EOD'
 		"user_skipped": true
 	},
 	"first_run_tabs": [
-		"https://www.google.no/"
+		"https://www.google.com/"
 	]
 }
 EOD
