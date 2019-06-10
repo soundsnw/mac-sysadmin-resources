@@ -18,7 +18,7 @@
 # - Logs filename changes and script status messages to the /usr/local/onedrivefixlog folder
 # - Makes sure relevant status messages are visible in Jamf logs
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 30)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 32)
 #
 # Version: 0.2
 #
@@ -68,7 +68,7 @@ fi
 
 if [ ! -f "$fixLog" ]; then
 
-  echo "$BD: $fixLog does not exist, touching file."
+  echo "$BD: $fixLog does not exist, touching logfiles."
   touch "$fixLog"
   touch "$filenameFixLog"
 
