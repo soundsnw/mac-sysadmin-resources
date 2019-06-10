@@ -23,7 +23,7 @@
 # Version: 0.2
 #
 # Original script by dsavage:
-# https://github.com/synapsepd/MacOS-OneDrive-KFM/blob/master/payload/usr/local/bin/onedrive-name-fix.sh
+# https://github.com/UoE-macOS/jss/blob/master/utilities-fix-file-names.sh
 #
 ##################################################################
 
@@ -84,12 +84,12 @@ if [ -d "$onedriveFolder" ]
 
 then
 
-	echo "$BD: OneDrive directory is present."
+    echo "$BD: OneDrive directory is present."
     echo "$BD: OneDrive directory is present." >> "$fixLog"
 
 else
 
-	echo "$BD: OneDrive directory not present, aborting."
+    echo "$BD: OneDrive directory not present, aborting."
     echo "$BD: OneDrive directory not present, aborting." >> "$fixLog"
 
     /usr/local/jamf/bin/jamf displayMessage -message "OneDrive folder does not exist. Set up OneDrive, or change the folder name to your organization's default."
