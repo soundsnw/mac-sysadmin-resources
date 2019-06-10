@@ -6,7 +6,7 @@
 # characters, leading or trailing spaces and correct them to 
 # allow smooth synchronization.
 #
-# Modified by snowsnd, Sunday June 9, 2019
+# Modified by soundsnw, Sunday June 9, 2019
 #
 # Changelog:
 # - Adapted to run from Jamf Self Service, with user messaging
