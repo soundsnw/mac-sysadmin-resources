@@ -6,9 +6,17 @@
 # characters, leading or trailing spaces and correct them to 
 # allow smooth synchronization.
 #
-# Modified by soundsnw, Sunday June 9, 2019
+# Modified by soundsnw, Saturday August 31, 2019
 #
-# Changelog:
+# Changelog
+#
+# August 31, 2019
+# - Corrected syntax with advice from shellcheck
+# - Updated the manner in which the logged-in user is found:
+#   https://erikberglund.github.io/2018/Get-the-currently-logged-in-user,-in-Bash/
+# - The correct time is now used in logs instead of the initial time the script was run being used throughout 
+#
+# June 9, 2019:
 # - Adapted to run from Jamf Self Service, with user messaging
 # - Bugfixes, the script was not running properly on recent OS versions
 # - Only treats the actual OneDrive folder
@@ -18,14 +26,18 @@
 # - Logs filename changes and script status messages to the /usr/local/onedrivefixlog folder
 # - Makes sure relevant status messages are visible in Jamf logs
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 32)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 44)
 #
-# Version: 0.2
+# Version: 0.2.1
 #
 # Original script by dsavage:
 # https://github.com/UoE-macOS/jss/blob/master/utilities-fix-file-names.sh
 #
 ##################################################################
+
+# Get the user
+
+uun=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }' )
 
 # Set OneDrive folder name (needs to be specified in the script)
 
@@ -39,14 +51,6 @@ onedriveFolder="/Users/$uun/OneDrive"
 
 rm /tmp/*.ffn
 
-# Get the user
-
-uun=`python -c 'from SystemConfiguration import SCDynamicStoreCopyConsoleUser; import sys; username = (SCDynamicStoreCopyConsoleUser(None, None, None) or [None])[0]; username = [username,""][username in [u"loginwindow", None, u""]]; sys.stdout.write(username + "\n");'`
-
-# Get date and time
-
-BD=`date +%m%d%y-%H%M`
-
 # Set logfile location and create log
 
 fixLogLocation=/usr/local/onedrivefixlog
@@ -57,24 +61,24 @@ filenameFixLog="$fixLogLocation/onedrive-namefixes.txt"
 
 if [ ! -d "$fixLogLocation" ]; then
 
-  echo "$BD: $fixLogLocation does not exist, creating directory."
+  echo "$(date +%m%d%y-%H%M): $fixLogLocation does not exist, creating directory."
   mkdir "$fixLogLocation"
 
 else
 
-  echo "$BD: $fixLogLocation exists."
+  echo "$(date +%m%d%y-%H%M): $fixLogLocation exists."
 
 fi
 
 if [ ! -f "$fixLog" ]; then
 
-  echo "$BD: $fixLog does not exist, touching logfiles."
+  echo "$(date +%m%d%y-%H%M): $fixLog does not exist, touching logfiles."
   touch "$fixLog"
   touch "$filenameFixLog"
 
 else
 
-  echo "$BD: $fixLog exists."
+  echo "$(date +%m%d%y-%H%M): $fixLog exists."
 
 fi
 
@@ -84,13 +88,13 @@ if [ -d "$onedriveFolder" ]
 
 then
 
-    echo "$BD: OneDrive directory is present."
-    echo "$BD: OneDrive directory is present." >> "$fixLog"
+    echo "$(date +%m%d%y-%H%M): OneDrive directory is present."
+    echo "$(date +%m%d%y-%H%M): OneDrive directory is present." >> "$fixLog"
 
 else
 
-    echo "$BD: OneDrive directory not present, aborting."
-    echo "$BD: OneDrive directory not present, aborting." >> "$fixLog"
+    echo "$(date +%m%d%y-%H%M): OneDrive directory not present, aborting."
+    echo "$(date +%m%d%y-%H%M): OneDrive directory not present, aborting." >> "$fixLog"
 
     /usr/local/jamf/bin/jamf displayMessage -message "OneDrive folder does not exist. Set up OneDrive, or change the folder name to your organization's default."
 
@@ -103,18 +107,18 @@ fi
 # Check if there is sufficient space to make a backup of the OneDrive folder and still have 5G free space
 
 availSpace=$(df "$HOME" | awk 'NR==2 { print $4 }')
-availSpaceG="$(($availSpace /2/1024/1024))"
+availSpaceG="$((availSpace /2/1024/1024))"
 
-echo "$BD: The disk has $availSpaceG GB free"
-echo "$BD: The disk has $availSpaceG GB and $availSpace 512-blocks free" >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): The disk has $availSpaceG GB free"
+echo "$(date +%m%d%y-%H%M): The disk has $availSpaceG GB and $availSpace 512-blocks free" >> "$fixLog"
 
 onedriveSize=$(du -s "$onedriveFolder" | awk -F '\t' '{print $1}')
-onedriveSizeG="$(($onedriveSize /2/1024/1024))"
+onedriveSizeG="$((onedriveSize /2/1024/1024))"
 
 onedriveFileCount=$(find "$onedriveFolder" | wc -l | sed -e 's/^ *//')
 
-echo "$BD: The OneDrive folder is using $onedriveSizeG GB of space and the file count is $onedriveFileCount before fixing filenames."
-echo "$BD: The OneDrive folder is using $onedriveSizeG GB and $onedriveSize 512-blocks and the file count is $onedriveFileCount before fixing filenames." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $onedriveSizeG GB of space and the file count is $onedriveFileCount before fixing filenames."
+echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $onedriveSizeG GB and $onedriveSize 512-blocks and the file count is $onedriveFileCount before fixing filenames." >> "$fixLog"
 
 # Set the amount of extra free space in 512-blocks in addition to the space consumed by the OneDrive
 # folder required to be able to run the script
@@ -123,21 +127,21 @@ reqAdditionalFreeSpace=10490000
 
 # Find the requried space to run the script
 
-reqSpace="$(($onedriveSize + $reqAdditionalFreeSpace))"
+reqSpace="$((onedriveSize + reqAdditionalFreeSpace))"
 
-neededSpace="$(($reqSpace - $availSpace))"
+neededSpace="$((reqSpace - availSpace))"
 
-neededSpaceG="$(($neededSpace /2/1024/1024))"
+neededSpaceG="$((neededSpace /2/1024/1024))"
 
-echo "$BD: The amount of free space required to run the script, in gigabytes, is $neededSpaceG"
-echo "$BD: The amount of free space required to run the script, in gigabytes, is $neededSpaceG" >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): The amount of free space required to run the script, in gigabytes, is $neededSpaceG"
+echo "$(date +%m%d%y-%H%M): The amount of free space required to run the script, in gigabytes, is $neededSpaceG" >> "$fixLog"
 
 # Check if there is enough available space to run the script, abort if there isn't
 
 if (( availSpace < reqSpace )); then
 
-  echo "$BD: Not enough space to run script, aborting."
-  echo "$BD: Not enough space to run script, aborting." >> "$fixLog"
+  echo "$(date +%m%d%y-%H%M): Not enough space to run script, aborting."
+  echo "$(date +%m%d%y-%H%M): Not enough space to run script, aborting." >> "$fixLog"
 
   /usr/local/jamf/bin/jamf displayMessage -message "There isn't enough free space to backup your OneDrive folder before correcting the filenames. Please liberate $neededSpaceG GB and try again."
   
@@ -147,7 +151,7 @@ if (( availSpace < reqSpace )); then
 
 else
 
-  echo "$BD: Sufficient space to run script, continuing.." >> "$fixLog"
+  echo "$(date +%m%d%y-%H%M): Sufficient space to run script, continuing.." >> "$fixLog"
 
 fi
 
@@ -163,13 +167,13 @@ fi
 
 # Backup the OneDrive folder
 
-echo "$BD: OneDrive backup started."
-echo "$BD: OneDrive backup started." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): OneDrive backup started."
+echo "$(date +%m%d%y-%H%M): OneDrive backup started." >> "$fixLog"
 
-tar -cvf "/Users/$uun/Desktop/OneDrive-Backup-$BD.tar" "$onedriveFolder" > /dev/null 2>&1
+tar -cvf "/Users/$uun/Desktop/OneDrive-Backup-$(date +%m%d%y-%H%M).tar" "$onedriveFolder" > /dev/null 2>&1
 
-echo "$BD: Backup complete." 
-echo "$BD: Backup complete."  >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Backup complete." 
+echo "$(date +%m%d%y-%H%M): Backup complete."  >> "$fixLog"
 
 # Remove local fstemps so they won't clog the server
 
@@ -181,19 +185,19 @@ Check_Trailing_Chars ()
 {
 
 cat /tmp/cln.ffn > /tmp/fixtrail.ffn
-linecount=`wc -l /tmp/fixtrail.ffn | awk '{print $1}'`
+linecount=$(wc -l /tmp/fixtrail.ffn | awk '{print $1}')
 counter=$linecount
-echo $linecount
+echo "$linecount"
 
 while ! [ "$counter" == 0 ]; do
 
-line="`sed -n ${counter}p /tmp/fixtrail.ffn`"
-lastChar="`sed -n ${counter}p /tmp/fixtrail.ffn | grep -Eo '.$'`"
+line="$(sed -n "${counter}"p /tmp/fixtrail.ffn)"
+lastChar="$(sed -n "${counter}"p /tmp/fixtrail.ffn | grep -Eo '.$')"
 
 if [ "$lastChar" == " " ] || [ "$lastChar" == "." ]
 then
-name=`basename "$line"` # get the filename we need to change
-path=`dirname "$line"` # dirname to get the path
+name=$(basename "$line") # get the filename we need to change
+path=$(dirname "$line") # dirname to get the path
 fixedname=$(echo "$name" | tr '.' '-' | awk '{sub(/[ \t]+$/, "")};1') # remove/replace the trailing whitespace or period
 echo "Trailing chars original : $line" >> "$filenameFixLog"
 echo "Trailing chars fix      : $path/$fixedname." >> "$filenameFixLog"
@@ -201,7 +205,7 @@ mv -vf "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
 
 fi
 
-let "counter = $counter -1"
+(( counter = counter -1  ))
 done
 }
 
@@ -210,96 +214,96 @@ Check_Leading_Spaces ()
 
 cat /tmp/cln.ffn > /tmp/fixlead.ffn
 
-linecount=`wc -l /tmp/fixlead.ffn | awk '{print $1}'`
+linecount=$(wc -l /tmp/fixlead.ffn | awk '{print $1}')
 counter=$linecount
 while ! [ "$counter" == 0 ]; do
 
-line="`sed -n ${counter}p /tmp/fixlead.ffn`"
-name=`basename "$line"` # get the filename we need to change
-path=`dirname "$line"` # dirname to get the path
+line="$(sed -n "${counter}"p /tmp/fixlead.ffn)"
+name=$(basename "$line") # get the filename we need to change
+path=$(dirname "$line") # dirname to get the path
 # sed out the leading whitespace
-fixedname=`echo $name | sed -e 's/^[ \t]*//'`
+fixedname=$(echo "$name" | sed -e 's/^[ \t]*//')
 echo "Leading spaces original : $line" >> "$filenameFixLog"
 echo "Leading spaces fix      : $path/$fixedname." >> "$filenameFixLog"
 # rename the file or folder
 mv -vf "$line" "$path/$fixedname" > /dev/null 2>&1
 
-let "counter = $counter -1"
+(( counter = counter -1 ))
 done
 }
 
 Fix_Names ()
 {
 # Count the number of lines
-linecount=`wc -l /tmp/${1}.ffn | awk '{print $1}'`
+linecount=$(wc -l /tmp/"${1}".ffn | awk '{print $1}')
 counter=$linecount
 while ! [ "$counter" == 0 ]; do
 
-line="`sed -n ${counter}p /tmp/${1}.ffn`"
-name=`basename "$line"` # get the filename we need to change
-path=`dirname "$line"` # dirname to get the path
+line="$(sed -n "${counter}"p /tmp/"${1}".ffn)"
+name=$(basename "$line") # get the filename we need to change
+path=$(dirname "$line") # dirname to get the path
 fixedname=$(echo "$name" | tr ':' '-' | tr '\\\' '-' | tr '\#\' '-' | tr '?' '-' | tr '*' '-' | tr '"' '-' | tr '<' '-' | tr '>' '-' | tr '%' '-' | tr '|' '-' ) # sed out the leading whitespace
 echo "$fixedname" >> /tmp/allfixed.ffn
 echo "Illegal characters original : $line" >> "$filenameFixLog"
 echo "Illegal characters fix      : $path/$fixedname" >> "$filenameFixLog"
 mv -vf "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
 
-let "counter = $counter -1"
+(( counter = counter -1 ))
 done
 }
 
 # Fix the filenames
 
-echo "$BD: Applying filename fixes.."
-echo "$BD: Applying filename fixes.." >> "$fixLog"
-echo "$BD: Applying filename fixes.." >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Applying filename fixes.."
+echo "$(date +%m%d%y-%H%M): Applying filename fixes.." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Applying filename fixes.." >> "$filenameFixLog"
 
-echo "$BD: Fixing illegal characters.."
-echo "$BD: Fixing illegal characters.." >> "$fixLog"
-echo "$BD: Fixing illegal characters.." >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Fixing illegal characters.."
+echo "$(date +%m%d%y-%H%M): Fixing illegal characters.." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Fixing illegal characters.." >> "$filenameFixLog"
 
 find "${onedriveFolder}" -name '*[\\/:*?"<>%|]*' -print >> /tmp/acln.ffn
 
 Fix_Names acln
 sleep 1
-echo "$BD: Fixed illegal chars"
-echo "$BD: Fixed illegal chars" >> "$fixLog"
-echo "$BD: Fixed illegal chars" >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Fixed illegal chars"
+echo "$(date +%m%d%y-%H%M): Fixed illegal chars" >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Fixed illegal chars" >> "$filenameFixLog"
 rm -f /tmp/cln.ffn
 
-echo "$BD: Fixing trailing characters.."
-echo "$BD: Fixing trailing characters.." >> "$fixLog"
-echo "$BD: Fixing trailing characters.." >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Fixing trailing characters.."
+echo "$(date +%m%d%y-%H%M): Fixing trailing characters.." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Fixing trailing characters.." >> "$filenameFixLog"
 
 find "${onedriveFolder}" -name "*" >> /tmp/cln.ffn
 
 Check_Trailing_Chars
-echo "$BD: Fixed trailing spaces and periods."
-echo "$BD: Fixed trailing spaces and periods." >> "$fixLog"
-echo "$BD: Fixed trailing spaces and periods." >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Fixed trailing spaces and periods."
+echo "$(date +%m%d%y-%H%M): Fixed trailing spaces and periods." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Fixed trailing spaces and periods." >> "$filenameFixLog"
 sleep 1
 rm -f /tmp/cln.ffn
 
-echo "$BD: Fixing leading spaces.."
-echo "$BD: Fixing leading spaces.." >> "$fixLog"
-echo "$BD: Fixing leading spaces.." >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Fixing leading spaces.."
+echo "$(date +%m%d%y-%H%M): Fixing leading spaces.." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Fixing leading spaces.." >> "$filenameFixLog"
 
 find "${onedriveFolder}" -name "*" >> /tmp/cln.ffn
 
 Check_Leading_Spaces
-echo "$BD: Fixed leading spaces."
-echo "$BD: Fixed leading spaces." >> "$fixLog"
-echo "$BD: Fixed leading spaces." >> "$filenameFixLog"
+echo "$(date +%m%d%y-%H%M): Fixed leading spaces."
+echo "$(date +%m%d%y-%H%M): Fixed leading spaces." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Fixed leading spaces." >> "$filenameFixLog"
 sleep 1
 rm -f /tmp/cln.ffn
 
 # Restart OneDrive
 
-echo "$BD: OneDrive is using $onedriveSizeG GB of space and the file count is $onedriveFileCount after correcting filenames."
-echo "$BD: OneDrive is using $onedriveSizeG GB of space and $onedriveSize 512-blocks and the file count is $onedriveFileCount after correcting filenames." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): OneDrive is using $onedriveSizeG GB of space and the file count is $onedriveFileCount after correcting filenames."
+echo "$(date +%m%d%y-%H%M): OneDrive is using $onedriveSizeG GB of space and $onedriveSize 512-blocks and the file count is $onedriveFileCount after correcting filenames." >> "$fixLog"
 
-echo "$BD: Restarting OneDrive."
-echo "$BD: Restarting OneDrive." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): Restarting OneDrive."
+echo "$(date +%m%d%y-%H%M): Restarting OneDrive." >> "$fixLog"
 
 open /Applications/OneDrive.app
 
