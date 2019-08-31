@@ -56,7 +56,7 @@ EOD
 
 # Set app ownership to logged in user and group to staff, so automatic updates will work for standard users
 
-loggedInUser=$( scutil <<< "show State:/Users/ConsoleUser" | awk -F': ' '/[[:space:]]+Name[[:space:]]:/ { if ( $2 != "loginwindow" ) { print $2 }}' )
+loggedInUser=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }' )
 
 /usr/sbin/chown -R $loggedInUser:staff "/Applications/Firefox.app"
 
