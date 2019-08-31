@@ -201,7 +201,7 @@ path=$(dirname "$line") # dirname to get the path
 fixedname=$(echo "$name" | tr '.' '-' | awk '{sub(/[ \t]+$/, "")};1') # remove/replace the trailing whitespace or period
 echo "Trailing chars original : $line" >> "$filenameFixLog"
 echo "Trailing chars fix      : $path/$fixedname." >> "$filenameFixLog"
-mv -vf "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
+mv -f "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
 
 fi
 
@@ -226,7 +226,7 @@ fixedname=$(echo "$name" | sed -e 's/^[ \t]*//')
 echo "Leading spaces original : $line" >> "$filenameFixLog"
 echo "Leading spaces fix      : $path/$fixedname." >> "$filenameFixLog"
 # rename the file or folder
-mv -vf "$line" "$path/$fixedname" > /dev/null 2>&1
+mv -f "$line" "$path/$fixedname" > /dev/null 2>&1
 
 (( counter = counter -1 ))
 done
@@ -246,7 +246,7 @@ fixedname=$(echo "$name" | tr ':' '-' | tr '\\\' '-' | tr '\#\' '-' | tr '?' '-'
 echo "$fixedname" >> /tmp/allfixed.ffn
 echo "Illegal characters original : $line" >> "$filenameFixLog"
 echo "Illegal characters fix      : $path/$fixedname" >> "$filenameFixLog"
-mv -vf "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
+mv -f "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
 
 (( counter = counter -1 ))
 done
@@ -315,7 +315,7 @@ sleep 1
 
 if pgrep caffeinate; then
 
-	killall caffeinate;
+  killall caffeinate;
 
 fi
 
