@@ -16,6 +16,7 @@
 # - No longer fixes # or %, which are supported in more recent versions of OneDrive
 #   https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa#invalidcharacters
 # - Changed all exit status codes to 0, to keep things looking tidy in Self Service
+# - No longer removes .fstemp files before doing rename operations
 #
 # August 31, 2019
 # - Corrected syntax with advice from shellcheck
