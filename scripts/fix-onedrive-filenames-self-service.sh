@@ -308,11 +308,11 @@ echo "$(date +%m%d%y-%H%M): Restarting OneDrive." >> "$fixLog"
 
 open /Applications/OneDrive.app
 
-sleep 3
+sleep 15
 
 /usr/local/jamf/bin/jamf displayMessage -message "File names have been corrected. A backup of the OneDrive folder has been made on the Desktop. You may delete the backup later, at your convenience."
 
-sleep 1
+sleep 3
 
 if pgrep caffeinate; then
   killall caffeinate;
