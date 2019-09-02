@@ -57,7 +57,7 @@ then
 
 else
 
-    echo "$OneDrive directory not present, aborting."
+    echo "OneDrive directory not present, aborting."
     /usr/local/jamf/bin/jamf displayMessage -message "OneDrive folder does not exist. Set up OneDrive, or change the folder name to your organization's default."
     exit 0;
 
