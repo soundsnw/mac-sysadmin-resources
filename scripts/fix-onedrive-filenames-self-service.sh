@@ -3,12 +3,19 @@
 ###################################################################
 #
 # Jamf Self Service Script to check user's OneDrive folder for illegal
-# characters, leading or trailing spaces and correct them to 
+# characters, leading or trailing spaces and corrects them to 
 # allow smooth synchronization.
 #
-# Modified by soundsnw, Saturday August 31, 2019
+# Modified by soundsnw, September 2, 2019
 #
 # Changelog
+#
+# September 2, 2019
+# - Only does rename operations on relevant files (much faster)
+# - Now comes in a fast and slow version (with and without backup and reporting)
+# - No longer fixes # or %, which are supported in more recent versions of OneDrive
+#   https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa#invalidcharacters
+# - Changed all exit status codes to 0, to keep things looking tidy in Self Service
 #
 # August 31, 2019
 # - Corrected syntax with advice from shellcheck
@@ -28,7 +35,7 @@
 #
 # Important: The OneDrive folder name used in your organization needs to be specified in the script (line 44)
 #
-# Version: 0.2.1
+# Version: 0.2.2
 #
 # Original script by dsavage:
 # https://github.com/UoE-macOS/jss/blob/master/utilities-fix-file-names.sh
@@ -100,7 +107,7 @@ else
 
     sleep 3;
  
-    exit 1;
+    exit 0;
 
 fi
 
@@ -118,7 +125,7 @@ onedriveSizeG="$((onedriveSize /2/1024/1024))"
 onedriveFileCount=$(find "$onedriveFolder" | wc -l | sed -e 's/^ *//')
 
 echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $onedriveSizeG GB of space and the file count is $onedriveFileCount before fixing filenames."
-echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $onedriveSizeG GB and $onedriveSize 512-blocks and the file count is $onedriveFileCount before fixing filenames." >> "$fixLog"
+echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $onedriveSizeG GB of space and the file count is $onedriveFileCount before fixing filenames." >> "$fixLog"
 
 # Set the amount of extra free space in 512-blocks in addition to the space consumed by the OneDrive
 # folder required to be able to run the script
@@ -147,7 +154,7 @@ if (( availSpace < reqSpace )); then
   
   sleep 3;
 
-  exit 1;
+  exit 0;
 
 else
 
@@ -184,7 +191,6 @@ find "$onedriveFolder" -name ".fstemp*" -exec rm -dfR '{}' \;
 Check_Trailing_Chars ()
 {
 
-cat /tmp/cln.ffn > /tmp/fixtrail.ffn
 linecount=$(wc -l /tmp/fixtrail.ffn | awk '{print $1}')
 counter=$linecount
 echo "$linecount"
@@ -211,8 +217,6 @@ done
 
 Check_Leading_Spaces ()
 {
-
-cat /tmp/cln.ffn > /tmp/fixlead.ffn
 
 linecount=$(wc -l /tmp/fixlead.ffn | awk '{print $1}')
 counter=$linecount
@@ -242,7 +246,7 @@ while ! [ "$counter" == 0 ]; do
 line="$(sed -n "${counter}"p /tmp/"${1}".ffn)"
 name=$(basename "$line") # get the filename we need to change
 path=$(dirname "$line") # dirname to get the path
-fixedname=$(echo "$name" | tr ':' '-' | tr '\\\' '-' | tr '\#\' '-' | tr '?' '-' | tr '*' '-' | tr '"' '-' | tr '<' '-' | tr '>' '-' | tr '%' '-' | tr '|' '-' ) # sed out the leading whitespace
+fixedname=$(echo "$name" | tr ':' '-' | tr '\\\' '-' | tr '?' '-' | tr '*' '-' | tr '"' '-' | tr '<' '-' | tr '>' '-' | tr '|' '-' ) # sed out the leading whitespace
 echo "$fixedname" >> /tmp/allfixed.ffn
 echo "Illegal characters original : $line" >> "$filenameFixLog"
 echo "Illegal characters fix      : $path/$fixedname" >> "$filenameFixLog"
@@ -262,40 +266,47 @@ echo "$(date +%m%d%y-%H%M): Fixing illegal characters.."
 echo "$(date +%m%d%y-%H%M): Fixing illegal characters.." >> "$fixLog"
 echo "$(date +%m%d%y-%H%M): Fixing illegal characters.." >> "$filenameFixLog"
 
-find "${onedriveFolder}" -name '*[\\/:*?"<>%|]*' -print >> /tmp/acln.ffn
+find "${onedriveFolder}" -name '*[\\:*?"<>|]*' -print >> /tmp/fixchars.ffn
 
-Fix_Names acln
+Fix_Names fixchars
 sleep 1
 echo "$(date +%m%d%y-%H%M): Fixed illegal chars"
 echo "$(date +%m%d%y-%H%M): Fixed illegal chars" >> "$fixLog"
 echo "$(date +%m%d%y-%H%M): Fixed illegal chars" >> "$filenameFixLog"
-rm -f /tmp/cln.ffn
 
 echo "$(date +%m%d%y-%H%M): Fixing trailing characters.."
 echo "$(date +%m%d%y-%H%M): Fixing trailing characters.." >> "$fixLog"
 echo "$(date +%m%d%y-%H%M): Fixing trailing characters.." >> "$filenameFixLog"
 
-find "${onedriveFolder}" -name "*" >> /tmp/cln.ffn
+find "${onedriveFolder}" -name "* " >> /tmp/fixtrail.ffn
+find "${onedriveFolder}" -name "*." >> /tmp/fixtrail.ffn
 
 Check_Trailing_Chars
 echo "$(date +%m%d%y-%H%M): Fixed trailing spaces and periods."
 echo "$(date +%m%d%y-%H%M): Fixed trailing spaces and periods." >> "$fixLog"
 echo "$(date +%m%d%y-%H%M): Fixed trailing spaces and periods." >> "$filenameFixLog"
 sleep 1
-rm -f /tmp/cln.ffn
 
 echo "$(date +%m%d%y-%H%M): Fixing leading spaces.."
 echo "$(date +%m%d%y-%H%M): Fixing leading spaces.." >> "$fixLog"
 echo "$(date +%m%d%y-%H%M): Fixing leading spaces.." >> "$filenameFixLog"
 
-find "${onedriveFolder}" -name "*" >> /tmp/cln.ffn
+find "${onedriveFolder}" -name " *" >> /tmp/fixlead.ffn
 
 Check_Leading_Spaces
 echo "$(date +%m%d%y-%H%M): Fixed leading spaces."
 echo "$(date +%m%d%y-%H%M): Fixed leading spaces." >> "$fixLog"
 echo "$(date +%m%d%y-%H%M): Fixed leading spaces." >> "$filenameFixLog"
 sleep 1
-rm -f /tmp/cln.ffn
+
+# Report number of files and size after fixes
+
+afterFixSize=$(du -s "$onedriveFolder" | awk -F '\t' '{print $1}')
+afterFixSizeG="$((afterFixSize /2/1024/1024))"
+afterFixFileCount=$(find "$onedriveFolder" | wc -l | sed -e 's/^ *//')
+
+echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $afterFixSizeG GB of space and the file count is $afterFixFileCount after fixing filenames."
+echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $afterFixSizeG GB of space and the file count is $afterFixFileCount after fixing filenames." >> "$fixLog"
 
 # Restart OneDrive
 
