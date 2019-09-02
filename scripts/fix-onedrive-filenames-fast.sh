@@ -19,7 +19,7 @@
 # 
 # For info on previous changes, see the other version of the script
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 35)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 37)
 #
 # Version: 0.2.2
 #
