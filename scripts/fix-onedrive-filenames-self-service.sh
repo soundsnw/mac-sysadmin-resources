@@ -193,23 +193,16 @@ Check_Trailing_Chars ()
 
 linecount=$(wc -l /tmp/fixtrail.ffn | awk '{print $1}')
 counter=$linecount
-echo "$linecount"
 
 while ! [ "$counter" == 0 ]; do
 
 line="$(sed -n "${counter}"p /tmp/fixtrail.ffn)"
-lastChar="$(sed -n "${counter}"p /tmp/fixtrail.ffn | grep -Eo '.$')"
-
-if [ "$lastChar" == " " ] || [ "$lastChar" == "." ]
-then
 name=$(basename "$line") # get the filename we need to change
 path=$(dirname "$line") # dirname to get the path
 fixedname=$(echo "$name" | tr '.' '-' | awk '{sub(/[ \t]+$/, "")};1') # remove/replace the trailing whitespace or period
 echo "Trailing chars original : $line" >> "$filenameFixLog"
-echo "Trailing chars fix      : $path/$fixedname." >> "$filenameFixLog"
+echo "Trailing chars fix      : $path/$fixedname" >> "$filenameFixLog"
 mv -f "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
-
-fi
 
 (( counter = counter -1  ))
 done
@@ -228,7 +221,7 @@ path=$(dirname "$line") # dirname to get the path
 # sed out the leading whitespace
 fixedname=$(echo "$name" | sed -e 's/^[ \t]*//')
 echo "Leading spaces original : $line" >> "$filenameFixLog"
-echo "Leading spaces fix      : $path/$fixedname." >> "$filenameFixLog"
+echo "Leading spaces fix      : $path/$fixedname" >> "$filenameFixLog"
 # rename the file or folder
 mv -f "$line" "$path/$fixedname" > /dev/null 2>&1
 
@@ -310,24 +303,19 @@ echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $afterFixSizeG GB of sp
 
 # Restart OneDrive
 
-echo "$(date +%m%d%y-%H%M): OneDrive is using $onedriveSizeG GB of space and the file count is $onedriveFileCount after correcting filenames."
-echo "$(date +%m%d%y-%H%M): OneDrive is using $onedriveSizeG GB of space and $onedriveSize 512-blocks and the file count is $onedriveFileCount after correcting filenames." >> "$fixLog"
-
 echo "$(date +%m%d%y-%H%M): Restarting OneDrive."
 echo "$(date +%m%d%y-%H%M): Restarting OneDrive." >> "$fixLog"
 
 open /Applications/OneDrive.app
 
-sleep 15
+sleep 3
 
 /usr/local/jamf/bin/jamf displayMessage -message "File names have been corrected. A backup of the OneDrive folder has been made on the Desktop. You may delete the backup later, at your convenience."
 
 sleep 1
 
 if pgrep caffeinate; then
-
   killall caffeinate;
-
 fi
 
 exit 0;
