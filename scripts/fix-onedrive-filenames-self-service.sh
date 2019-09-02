@@ -33,7 +33,7 @@
 # - Logs filename changes and script status messages to the /usr/local/onedrivefixlog folder
 # - Makes sure relevant status messages are visible in Jamf logs
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 44)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 51)
 #
 # Version: 0.2.2
 #
