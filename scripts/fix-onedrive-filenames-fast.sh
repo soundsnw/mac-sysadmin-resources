@@ -112,7 +112,7 @@ line="$(sed -n "${counter}"p /tmp/"${1}".ffn)"
 name=$(basename "$line")
 path=$(dirname "$line")
 fixedname=$(echo "$name" | tr ':' '-' | tr '\\\' '-' | tr '?' '-' | tr '*' '-' | tr '"' '-' | tr '<' '-' | tr '>' '-' | tr '|' '-' )
-mv -f "$line" "$path/$fixedname" > /dev/null 2>&1 # rename the file or folder
+mv -f "$line" "$path/$fixedname" > /dev/null 2>&1
 
 (( counter = counter -1 ))
 done
