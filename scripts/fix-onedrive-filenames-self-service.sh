@@ -182,10 +182,6 @@ tar -cvf "/Users/$uun/Desktop/OneDrive-Backup-$(date +%m%d%y-%H%M).tar" "$onedri
 echo "$(date +%m%d%y-%H%M): Backup complete." 
 echo "$(date +%m%d%y-%H%M): Backup complete."  >> "$fixLog"
 
-# Remove local fstemps so they won't clog the server
-
-find "$onedriveFolder" -name ".fstemp*" -exec rm -dfR '{}' \;
-
 # Filename correction functions
 
 Check_Trailing_Chars ()
