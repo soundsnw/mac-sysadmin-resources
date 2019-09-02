@@ -189,7 +189,7 @@ open /Applications/OneDrive.app
 
 sleep 5
 
-/usr/local/jamf/bin/jamf displayMessage -message "File names have been corrected. A backup of the OneDrive folder has been made on the Desktop. You may delete the backup later, at your convenience."
+/usr/local/jamf/bin/jamf displayMessage -message "File names have been corrected."
 
 sleep 1
 
