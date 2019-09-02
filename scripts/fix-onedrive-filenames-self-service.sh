@@ -33,7 +33,7 @@
 # - Logs filename changes and script status messages to the /usr/local/onedrivefixlog folder
 # - Makes sure relevant status messages are visible in Jamf logs
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 51)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 55)
 #
 # Version: 0.2.2
 #
@@ -42,6 +42,10 @@
 #
 ##################################################################
 
+# Make sure the machine does not sleep until the script is finished
+
+( caffeinate -sim -t 7200 ) & disown;
+
 # Get the user
 
 uun=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }' )
@@ -49,10 +53,6 @@ uun=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwin
 # Set OneDrive folder name (needs to be specified in the script)
 
 onedriveFolder="/Users/$uun/OneDrive"
-
-# Make sure the machine does not sleep until the script is finished
-
-( caffeinate -sim -t 7200 ) & disown;
 
 # Clear any previous temp files
 
