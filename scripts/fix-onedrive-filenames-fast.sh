@@ -6,6 +6,8 @@
 # characters, leading or trailing spaces and corrects them to 
 # allow smooth synchronization.
 #
+# The script will work fine without Jamf, just remove it from the script (it is used for popups with user messaging)
+#
 # Modified by soundsnw, September 2, 2019
 #
 # Changelog
