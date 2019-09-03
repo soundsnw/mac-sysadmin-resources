@@ -22,7 +22,7 @@
 # - Changed all exit status codes to 0, to keep things looking tidy in Self Service
 # - No longer removes .fstemp files before doing rename operations
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 47)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 48)
 #
 # Version: 0.3
 #
