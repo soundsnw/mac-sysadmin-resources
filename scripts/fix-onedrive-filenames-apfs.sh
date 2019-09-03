@@ -13,10 +13,10 @@
 # September 3, 2019
 # - The script is now much faster, while still logging and making a backup before changing filenames
 # - Backup being made using APFS clonefile (support for HFS dropped)
-# - Backup 
+# - Spotlight prevented from indexing backup to prevent users from opening the wrong file later
 #
 # September 2, 2019
-# - Only does rename operations on relevant files (much faster)
+# - Only does rename operations on relevant files, for increased speed and safety
 # - No longer fixes # or %, which are supported in more recent versions of OneDrive
 #   https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa#invalidcharacters
 # - Changed all exit status codes to 0, to keep things looking tidy in Self Service
