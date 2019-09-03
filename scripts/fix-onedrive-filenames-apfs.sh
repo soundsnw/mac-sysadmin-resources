@@ -13,6 +13,7 @@
 # September 3, 2019
 # - The script is now much faster, while still logging and making a backup before changing filenames
 # - Backup being made using APFS clonefile (support for HFS dropped)
+# - Backup 
 #
 # September 2, 2019
 # - Only does rename operations on relevant files (much faster)
