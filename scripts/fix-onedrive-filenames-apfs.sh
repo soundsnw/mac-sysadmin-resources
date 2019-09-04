@@ -52,10 +52,9 @@ BD=$(date +%m%d%y-%H%M)
 # Creating log
 
 mkdir "/usr/local/onedrive-fixlogs"
-touch "/usr/local/onedrive-fixlogs/onedrive-fixlog-$BD"
 fixLog="/usr/local/onedrive-fixlogs/onedrive-fixlog-$BD"
 
-echo "$(date +%m%d%y-%H%M): Log created at $fixLog" | tee -a "$fixLog"
+echo "$(date +%m%d%y-%H%M): Log created at $fixLog" | tee "$fixLog"
 
 # Check if file system is APFS
 
