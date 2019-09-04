@@ -6,9 +6,11 @@
 # characters, leading or trailing spaces and corrects them to 
 # allow smooth synchronization.
 #
-# Modified by soundsnw, September 3, 2019
+# Modified by soundsnw, September 4, 2019
 #
 # Changelog
+# September 4, 2019
+# - Changed backup parent directory to user folder to avoid potential problems if Desktop sync is turned on
 #
 # September 3, 2019
 # - The script is now much faster, while still logging and making a backup before changing filenames
@@ -34,10 +36,6 @@
 # Make sure the machine does not sleep until the script is finished
 
 ( caffeinate -sim -t 3600 ) & disown;
-
-# Clear any previous temp files
-
-rm /tmp/*.ffn
 
 # Get the user
 
@@ -165,25 +163,23 @@ done
 # Fix the filenames
 
 echo "$(date +%m%d%y-%H%M): Fixing illegal characters" | tee -a "$fixLog"
-find "${onedriveFolder}" -name '*[\\:*?"<>|]*' -print >> /tmp/fixchars.ffn
+find "${onedriveFolder}" -name '*[\\:*?"<>|]*' -print > /tmp/fixchars.ffn
 Fix_Names fixchars
 
 echo "$(date +%m%d%y-%H%M): Fixing trailing characters" | tee -a "$fixLog"
-find "${onedriveFolder}" -name "* " >> /tmp/fixtrail.ffn
-find "${onedriveFolder}" -name "*." >> /tmp/fixtrail.ffn
+find "${onedriveFolder}" -name "* " -print > /tmp/fixtrail.ffn
+find "${onedriveFolder}" -name "*." -print >> /tmp/fixtrail.ffn
 Check_Trailing_Chars
 
 echo "$(date +%m%d%y-%H%M): Fixing leading spaces" | tee -a "$fixLog"
-find "${onedriveFolder}" -name " *" >> /tmp/fixlead.ffn
+find "${onedriveFolder}" -name " *" -print > /tmp/fixlead.ffn
 Check_Leading_Spaces
 
 echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $(du -sk "$onedriveFolder" | awk -F '\t' '{print $1}') KB and the file count is $(find "$onedriveFolder" | wc -l | sed -e 's/^ *//') after fixing filenames. Restarting OneDrive." | tee -a "$fixLog"
 
 jamf displayMessage -message "OneDrive file names have been fixed, so they can sync properly. A backup copy has been made in the Backup-$BD folder in your user folder. The backup will be replaced the next time you correct filenames. You may also delete it, should you need more free space." 
 
-# Clean up and restart OneDrive
-
-rm /tmp/*.ffn
+# Restart OneDrive
 
 open /Applications/OneDrive.app
 
