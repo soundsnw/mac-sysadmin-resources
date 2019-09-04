@@ -24,9 +24,9 @@
 # - Changed all exit status codes to 0, to keep things looking tidy in Self Service
 # - No longer removes .fstemp files before doing rename operations
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 48)
+# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 46)
 #
-# Version: 0.3
+# Version: 0.3.1
 #
 # Original script by dsavage:
 # https://github.com/UoE-macOS/jss/blob/master/utilities-fix-file-names.sh
@@ -68,7 +68,8 @@ else
 
   echo "$(date +%m%d%y-%H%M): File system not supported, aborting." | tee -a "$fixLog"
 
-  jamf displayMessage -message "The file system on this Mac is not supported, please upgrade to macOS 10.13 or more recent." 
+  jamf displayMessage -message "The file system on this Mac is not supported, please upgrade to macOS 10.13 or more recent."
+  
   exit 0;
 
 fi
