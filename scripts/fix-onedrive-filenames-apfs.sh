@@ -89,12 +89,12 @@ then
 
 	echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $(du -sk "$onedriveFolder" | awk -F '\t' '{print $1}') KB and the file count is $(find "$onedriveFolder" | wc -l | sed -e 's/^ *//') before fixing filenames." | tee -a "$fixLog"
 
-	rm -drf /Users/"$uun"/Desktop/Backup-??????-????
-	mkdir -p "/Users/$uun/Desktop/Backup-$BD/$BD.noindex"
-	chown "$uun":staff "/Users/$uun/Desktop/Backup-$BD"
-	chown "$uun":staff "/Users/$uun/Desktop/Backup-$BD/$BD.noindex"
-	touch "/Users/$uun/Desktop/Backup-$BD/$BD.noindex/.metadata_never_index"
-	/bin/cp -cpR "$onedriveFolder" "/Users/$uun/Desktop/Backup-$BD/$BD.noindex"
+	rm -drf /Users/"$uun"/Backup-??????-????
+	mkdir -p "/Users/$uun/Backup-$BD/$BD.noindex"
+	chown "$uun":staff "/Users/$uun/Backup-$BD"
+	chown "$uun":staff "/Users/$uun/Backup-$BD/$BD.noindex"
+	touch "/Users/$uun/Backup-$BD/$BD.noindex/.metadata_never_index"
+	/bin/cp -cpR "$onedriveFolder" "/Users/$uun/Backup-$BD/$BD.noindex"
 
 	echo "$(date +%m%d%y-%H%M): APFS clonefile backup created at /Users/$uun/Backup-$BD/$BD.noindex." | tee -a "$fixLog"
 
@@ -103,6 +103,7 @@ else
   echo "$(date +%m%d%y-%H%M): OneDrive directory not present, aborting." | tee -a "$fixLog"
 
   jamf displayMessage -message "OneDrive is not configured. Ask IT to help you set up OneDrive, or change the name of the OneDrive folder."
+  
   exit 0;
 
 fi
@@ -178,7 +179,7 @@ Check_Leading_Spaces
 
 echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $(du -sk "$onedriveFolder" | awk -F '\t' '{print $1}') KB and the file count is $(find "$onedriveFolder" | wc -l | sed -e 's/^ *//') after fixing filenames. Restarting OneDrive." | tee -a "$fixLog"
 
-jamf displayMessage -message "OneDrive file names have been fixed, so they can sync properly. A backup copy has been made in the Backup-$BD folder on your desktop. The backup will be replaced the next time you correct filenames. You may also delete it, should you need more free space." 
+jamf displayMessage -message "OneDrive file names have been fixed, so they can sync properly. A backup copy has been made in the Backup-$BD folder in your user folder. The backup will be replaced the next time you correct filenames. You may also delete it, should you need more free space." 
 
 # Clean up and restart OneDrive
 
