@@ -7,9 +7,7 @@ onedriveFolder="/Users/$loggedInUser/OneDrive"
 
 if [[ -d "$onedriveFolder" ]] ; then
 
-rm /tmp/odfailures
-
-find "${onedriveFolder}" -name '*[\\:*?"<>|]*' -print >> /tmp/odfailures
+find "${onedriveFolder}" -name '*[\\:*?"<>|]*' -print > /tmp/odfailures
 find "${onedriveFolder}" -name "* " -print >> /tmp/odfailures
 find "${onedriveFolder}" -name "*." -print >> /tmp/odfailures
 find "${onedriveFolder}" -name " *" -print >> /tmp/odfailures
