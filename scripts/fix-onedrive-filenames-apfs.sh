@@ -60,7 +60,7 @@ function finish() {
 
 	[[ $(pgrep "OneDrive") ]] || open -gj "/Applications/OneDrive.app"
 
-	[[ $(pgrep "caffeinate") ]] || killall "caffeinate"
+	[[ ! $(pgrep "caffeinate") ]] || killall "caffeinate"
 
 	exit 0
 
