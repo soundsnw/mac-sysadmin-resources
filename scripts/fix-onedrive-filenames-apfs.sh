@@ -214,7 +214,7 @@ function main() {
 		rm -drf "/Users/""$loggedinuser""/FF-Backup-"??????"-"????
 		mkdir -p "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
 		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate"
-		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
+		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex"
 		touch "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex/.metadata_never_index"
 		cp -cpR "$onedrivefolder" "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex"
 
