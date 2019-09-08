@@ -6,9 +6,22 @@
 # characters, leading or trailing spaces and corrects them to 
 # allow smooth synchronization.
 #
-# Modified by soundsnw, September 4, 2019
+# Modified by soundsnw, September 8, 2019
+#
+# Important: The OneDrive folder name used in your organization 
+# needs to be specified in the script 
+# (line 174)
 #
 # Changelog
+# September 8, 2019
+# - Treats directories first
+# - If the corrected filename is used by another file, appends a random number at the end
+# - Checks if the number of files before and after renaming is the same
+# - Checks if required commands are present
+# - Uses mktemp for temp files
+# - Restarts OneDrive and cleans up temp files if aborted
+# - Uses local and readonly variables where appropriate
+#
 # September 4, 2019
 # - Changed backup parent directory to user folder to avoid potential problems if Desktop sync is turned on
 #
@@ -24,165 +37,266 @@
 # - Changed all exit status codes to 0, to keep things looking tidy in Self Service
 # - No longer removes .fstemp files before doing rename operations
 #
-# Important: The OneDrive folder name used in your organization needs to be specified in the script (line 46)
-#
-# Version: 0.3.1
+# Version: 0.5
 #
 # Original script by dsavage:
 # https://github.com/UoE-macOS/jss/blob/master/utilities-fix-file-names.sh
 #
 ##################################################################
 
+set -o pipefail
+
+# Checks for presence of required commands
+
+if [[ -f /bin/cp ]] && [[ -f /usr/bin/touch ]] && [[ -f /usr/bin/jot ]] && [[ -f /usr/sbin/chown ]] && [[ -f /usr/bin/find ]] && [[ -f /usr/bin/du ]] && [[ -f /usr/sbin/diskutil ]] && [[ -f /usr/bin/tee ]] && [[ -f /bin/date ]] && [[ -f /bin/mkdir ]] && [[ -f /usr/sbin/scutil ]] && [[ -f /usr/bin/sed ]] && [[ -f /bin/mv ]] && [[ -f /usr/bin/tr ]] && [[ -f /usr/bin/dirname ]] && [[ -f /usr/bin/basename ]] && [[ -f /usr/bin/awk ]] && [[ -f /usr/bin/wc ]] && [[ -f /bin/rm ]] && [[ -f /usr/bin/pgrep ]] && [[ -f /usr/bin/open ]] && [[ -f /usr/bin/killall ]] && [[ -f /usr/bin/caffeinate ]]; then
+
+	echo "Required commands are present."
+
+else
+
+	echo "Required commands are not present, aborting."
+	exit 1
+
+fi
+
+unset fixchars fixtrail fixlead
+
+# Cleanup function, removes temp files and restarts OneDrive
+
+function finish() {
+
+	[[ -z "$fixchars" ]] || /bin/rm -f "$fixchars"
+	[[ -z "$fixtrail" ]] || /bin/rm -f "$fixtrail"
+	[[ -z "$fixlead" ]] || /bin/rm -f "$fixlead"
+
+	[[ $(/usr/bin/pgrep "OneDrive") ]] || /usr/bin/open -gj "/Applications/OneDrive.app"
+
+	[[ $(/usr/bin/pgrep "caffeinate") ]] || /usr/bin/killall "caffeinate"
+
+	exit 0
+
+}
+trap finish EXIT HUP INT QUIT TERM
+
 # Make sure the machine does not sleep until the script is finished
 
-( caffeinate -sim -t 3600 ) & disown;
-
-# Get the user
-
-uun=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }' );
-
-# Set OneDrive folder name
-
-onedriveFolder="/Users/$uun/OneDrive"
-
-# Get date
-
-BD=$(date +%m%d%y-%H%M)
-
-# Creating log
-
-mkdir "/usr/local/onedrive-fixlogs"
-fixLog="/usr/local/onedrive-fixlogs/onedrive-fixlog-$BD"
-
-echo "$(date +%m%d%y-%H%M): Log created at $fixLog" | tee "$fixLog"
-
-# Check if file system is APFS
-
-boot_filesystem_check=$(/usr/sbin/diskutil info / | awk '/Type \(Bundle\)/ {print $3}')
-
-if [[ "$boot_filesystem_check" = "apfs" ]]; then
-
-  echo "$(date +%m%d%y-%H%M): File system is APFS, the script may continue." | tee -a "$fixLog"
-
-else
-
-  echo "$(date +%m%d%y-%H%M): File system not supported, aborting." | tee -a "$fixLog"
-
-  jamf displayMessage -message "The file system on this Mac is not supported, please upgrade to macOS 10.13 or more recent."
-  
-  exit 0;
-
-fi
-
-# Check if OneDrive folder is present
-# Make backup using APFS clonefile, prevent the backup from being indexed by Spotlight
-
-if [ -d "$onedriveFolder" ]
-
-then
-
-	echo "$(date +%m%d%y-%H%M): OneDrive directory is present. Stopping OneDrive." | tee -a "$fixLog"
-
-	killall OneDrive
-
-	echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $(du -sk "$onedriveFolder" | awk -F '\t' '{print $1}') KB and the file count is $(find "$onedriveFolder" | wc -l | sed -e 's/^ *//') before fixing filenames." | tee -a "$fixLog"
-
-	rm -drf /Users/"$uun"/FF-Backup-??????-????
-	mkdir -p "/Users/$uun/FF-Backup-$BD/$BD.noindex"
-	chown "$uun":staff "/Users/$uun/FF-Backup-$BD"
-	chown "$uun":staff "/Users/$uun/FF-Backup-$BD/$BD.noindex"
-	touch "/Users/$uun/FF-Backup-$BD/$BD.noindex/.metadata_never_index"
-	/bin/cp -cpR "$onedriveFolder" "/Users/$uun/FF-Backup-$BD/$BD.noindex"
-
-	echo "$(date +%m%d%y-%H%M): APFS clonefile backup created at /Users/$uun/FF-Backup-$BD/$BD.noindex." | tee -a "$fixLog"
-
-else
-
-  echo "$(date +%m%d%y-%H%M): OneDrive directory not present, aborting." | tee -a "$fixLog"
-
-  jamf displayMessage -message "OneDrive is not configured. Ask IT to help you set up OneDrive, or change the name of the OneDrive folder."
-  
-  exit 0;
-
-fi
+(/usr/bin/caffeinate -sim -t 3600) &
+disown
 
 # Filename correction functions
 
-Check_Trailing_Chars ()
-{
+fix_trailing_chars() {
 
-linecount=$(wc -l /tmp/fixtrail.ffn | awk '{print $1}')
-counter=$linecount
+	local linecount counter line name path fixedname
+	linecount="$(/usr/bin/wc -l "$fixtrail" | /usr/bin/awk '{print $1}')"
+	counter="$linecount"
 
-while ! [ "$counter" == 0 ]; do
+	while ! [ "$counter" == 0 ]; do
 
-line="$(sed -n "${counter}"p /tmp/fixtrail.ffn)"
-name=$(basename "$line")
-path=$(dirname "$line")
-fixedname=$(echo "$name" | tr '.' '-' | awk '{sub(/[ \t]+$/, "")};1')
-mv -vf "$line" "$path/$fixedname" >> "$fixLog"
+		line="$(/usr/bin/sed -n "${counter}"p "$fixtrail")"
+		name="$(/usr/bin/basename "$line")"
+		path="$(/usr/bin/dirname "$line")"
+		fixedname="$(echo "$name" | /usr/bin/tr '.' '-' | /usr/bin/awk '{sub(/[ \t]+$/, "")};1')"
 
-(( counter = counter -1 ))
-done
+		if [[ -f "$path"'/'"$fixedname" ]] || [[ -d "$path"'/'"$fixedname" ]]; then
+
+			/bin/mv -vf "$line" "$path"'/'"$fixedname"'-'"$(/usr/bin/jot -nr 1 10000000 99999999)" >>"$fixlog"
+
+		else
+
+			/bin/mv -vf "$line" "$path"'/'"$fixedname" >>"$fixlog"
+
+		fi
+
+		((counter = counter - 1))
+	done
 }
 
-Check_Leading_Spaces ()
-{
+fix_leading_spaces() {
 
-linecount=$(wc -l /tmp/fixlead.ffn | awk '{print $1}')
-counter=$linecount
-while ! [ "$counter" == 0 ]; do
+	local linecount counter line name path fixedname
+	linecount="$(/usr/bin/wc -l "$fixlead" | /usr/bin/awk '{print $1}')"
+	counter="$linecount"
+	while ! [ "$counter" == 0 ]; do
 
-line="$(sed -n "${counter}"p /tmp/fixlead.ffn)"
-name=$(basename "$line")
-path=$(dirname "$line")
-fixedname=$(echo "$name" | sed -e 's/^[ \t]*//')
-mv -vf "$line" "$path/$fixedname" >> "$fixLog"
+		line="$(/usr/bin/sed -n "${counter}"p "$fixlead")"
+		name="$(/usr/bin/basename "$line")"
+		path="$(/usr/bin/dirname "$line")"
+		fixedname="$(echo "$name" | /usr/bin/sed -e 's/^[ \t]*//')"
 
-(( counter = counter -1 ))
-done
+		if [[ -f "$path"'/'"$fixedname" ]] || [[ -d "$path"'/'"$fixedname" ]]; then
+
+			/bin/mv -vf "$line" "$path"'/'"$fixedname"'-'"$(/usr/bin/jot -nr 1 10000000 99999999)" >>"$fixlog"
+
+		else
+
+			/bin/mv -vf "$line" "$path"'/'"$fixedname" >>"$fixlog"
+
+		fi
+
+		((counter = counter - 1))
+	done
 }
 
-Fix_Names ()
-{
+fix_names() {
 
-linecount=$(wc -l /tmp/"${1}".ffn | awk '{print $1}')
-counter=$linecount
-while ! [ "$counter" == 0 ]; do
+	local linecount counter line name path fixedname
+	linecount="$(/usr/bin/wc -l "$fixchars" | /usr/bin/awk '{print $1}')"
+	counter="$linecount"
+	while ! [ "$counter" == 0 ]; do
 
-line="$(sed -n "${counter}"p /tmp/"${1}".ffn)"
-name=$(basename "$line")
-path=$(dirname "$line")
-fixedname=$(echo "$name" | tr ':' '-' | tr '\\\' '-' | tr '?' '-' | tr '*' '-' | tr '"' '-' | tr '<' '-' | tr '>' '-' | tr '|' '-' )
-mv -vf "$line" "$path/$fixedname" >> "$fixLog"
+		line="$(/usr/bin/sed -n "${counter}"p "$fixchars")"
+		name="$(/usr/bin/basename "$line")"
+		path="$(/usr/bin/dirname "$line")"
+		fixedname="$(echo "$name" | /usr/bin/tr ':' '-' | /usr/bin/tr '\\' '-' | /usr/bin/tr '?' '-' | /usr/bin/tr '*' '-' | /usr/bin/tr '"' '-' | /usr/bin/tr '<' '-' | /usr/bin/tr '>' '-' | /usr/bin/tr '|' '-')"
 
-(( counter = counter -1 ))
-done
+		if [[ -f "$path"'/'"$fixedname" ]] || [[ -d "$path"'/'"$fixedname" ]]; then
+
+			/bin/mv -vf "$line" "$path"'/'"$fixedname"'-'"$(/usr/bin/jot -nr 1 10000000 99999999)" >>"$fixlog"
+
+		else
+
+			/bin/mv -vf "$line" "$path"'/'"$fixedname" >>"$fixlog"
+
+		fi
+
+		((counter = counter - 1))
+	done
 }
 
-# Fix the filenames
+function main() {
 
-echo "$(date +%m%d%y-%H%M): Fixing illegal characters" | tee -a "$fixLog"
-find "${onedriveFolder}" -name '*[\\:*?"<>|]*' -print > /tmp/fixchars.ffn
-Fix_Names fixchars
+	# Get the user
 
-echo "$(date +%m%d%y-%H%M): Fixing trailing characters" | tee -a "$fixLog"
-find "${onedriveFolder}" -name "* " -print > /tmp/fixtrail.ffn
-find "${onedriveFolder}" -name "*." -print >> /tmp/fixtrail.ffn
-Check_Trailing_Chars
+	local -r loggedinuser="$(/usr/sbin/scutil <<<"show State:/Users/ConsoleUser" | /usr/bin/awk '/Name :/ && ! /loginwindow/ { print $3 }')"
 
-echo "$(date +%m%d%y-%H%M): Fixing leading spaces" | tee -a "$fixLog"
-find "${onedriveFolder}" -name " *" -print > /tmp/fixlead.ffn
-Check_Leading_Spaces
+	# Set OneDrive folder name
 
-echo "$(date +%m%d%y-%H%M): The OneDrive folder is using $(du -sk "$onedriveFolder" | awk -F '\t' '{print $1}') KB and the file count is $(find "$onedriveFolder" | wc -l | sed -e 's/^ *//') after fixing filenames. Restarting OneDrive." | tee -a "$fixLog"
+	local -r onedrivefolder="/Users/""$loggedinuser""/OneDrive"
 
-jamf displayMessage -message "OneDrive file names have been fixed, so they can sync properly. A backup copy has been made in the FF-Backup-$BD folder in your user folder. The backup will be replaced the next time you correct filenames. You may also delete it, should you need more free space." 
+	# Get date
 
-# Restart OneDrive
+	local -r fixdate="$(/bin/date +%m%d%y-%H%M)"
 
-open /Applications/OneDrive.app
+	# Creating log
 
-killall caffeinate
+	[[ -d "/usr/local/onedrive-fixlogs" ]] || /bin/mkdir "/usr/local/onedrive-fixlogs"
 
-exit 0
+	fixlog="/usr/local/onedrive-fixlogs/onedrive-fixlog-""$fixdate"
+	readonly fixlog
+
+	echo "$(/bin/date +%m%d%y-%H%M)"": Log created at ""$fixlog" | /usr/bin/tee "$fixlog"
+
+	# Check if file system is APFS
+
+	local apfscheck="$(/usr/sbin/diskutil info / | /usr/bin/awk '/Type \(Bundle\)/ {print $3}')"
+
+	if [[ "$apfscheck" == "apfs" ]]; then
+
+		echo "$(/bin/date +%m%d%y-%H%M): File system is APFS, the script may continue." | /usr/bin/tee -a "$fixlog"
+
+	else
+
+		echo "$(/bin/date +%m%d%y-%H%M): File system not supported, aborting." | /usr/bin/tee -a "$fixlog"
+
+		/usr/local/jamf/bin/jamf displayMessage -message "The file system on this Mac is not supported, please upgrade to macOS High Sierra or more recent."
+
+		exit 0
+
+	fi
+
+	# Check if OneDrive folder is present
+	# Make backup using APFS clonefile, prevent the backup from being indexed by Spotlight
+
+	if [ -d "$onedrivefolder" ]; then
+
+		echo "$(/bin/date +%m%d%y-%H%M): OneDrive directory is present. Stopping OneDrive." | /usr/bin/tee -a "$fixlog"
+
+		/usr/bin/killall OneDrive || true
+
+		beforefix_size=$(/usr/bin/du -sk "$onedrivefolder" | /usr/bin/awk -F '\t' '{print $1}')
+		readonly beforefix_size
+		beforefix_filecount=$(/usr/bin/find "$onedrivefolder" | /usr/bin/wc -l | /usr/bin/sed -e 's/^ *//')
+		readonly beforefix_filecount
+
+		echo "$(/bin/date +%m%d%y-%H%M)"": The OneDrive folder is using ""$beforefix_size"" KB and the file count is ""$beforefix_filecount"" before fixing filenames." | /usr/bin/tee -a "$fixlog"
+
+		/bin/rm -dRf "/Users/""$loggedinuser""/FF-Backup-"[0-1][0-9][0-3][0-9][1-2][0-9]-[0-2][0-9][0-6][0-9]
+		/bin/mkdir -p "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
+		/usr/sbin/chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate"
+		/usr/sbin/chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
+		/usr/bin/touch "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex/.metadata_never_index"
+		/bin/cp -cpR "$onedrivefolder" "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
+
+		echo "$(/bin/date +%m%d%y-%H%M)"": APFS clonefile backup created at /Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex." | /usr/bin/tee -a "$fixlog"
+
+	else
+
+		echo "$(/bin/date +%m%d%y-%H%M)"": OneDrive directory not present, aborting." | /usr/bin/tee -a "$fixlog"
+
+		/usr/local/jamf/bin/jamf displayMessage -message "Cannot find the OneDrive folder. Ask IT to help st up OneDrive, or change the name of the folder"
+		exit 0
+
+	fi
+
+	# Fix directory filenames
+
+	echo "$(/bin/date +%m%d%y-%H%M): Fixing illegal characters in directory names" | /usr/bin/tee -a "$fixlog"
+	fixchars="$(/usr/bin/mktemp)"
+	readonly fixchars
+	/usr/bin/find "${onedrivefolder}" -type d -name '*[\\:*?"<>|]*' -print >"$fixchars"
+	fix_names
+
+	echo "$(/bin/date +%m%d%y-%H%M): Fixing trailing characters in directory names" | /usr/bin/tee -a "$fixlog"
+	fixtrail="$(/usr/bin/mktemp)"
+	readonly fixtrail
+	/usr/bin/find "${onedrivefolder}" -type d -name "* " -print >"$fixtrail"
+	/usr/bin/find "${onedrivefolder}" -type d -name "*." -print >>"$fixtrail"
+	fix_trailing_chars
+
+	echo "$(/bin/date +%m%d%y-%H%M): Fixing leading spaces in directory names" | /usr/bin/tee -a "$fixlog"
+	fixlead="$(/usr/bin/mktemp)"
+	readonly fixlead
+	/usr/bin/find "${onedrivefolder}" -type d -name " *" -print >"$fixlead"
+	fix_leading_spaces
+
+	# Fix all other filenames
+
+	echo "$(/bin/date +%m%d%y-%H%M): Fixing illegal characters in filenames" | /usr/bin/tee -a "$fixlog"
+
+	/usr/bin/find "${onedrivefolder}" -name '*[\\:*?"<>|]*' -print >"$fixchars"
+	fix_names
+
+	echo "$(/bin/date +%m%d%y-%H%M): Fixing trailing characters in filenames" | /usr/bin/tee -a "$fixlog"
+	/usr/bin/find "${onedrivefolder}" -name "* " -print >"$fixtrail"
+	/usr/bin/find "${onedrivefolder}" -name "*." -print >>"$fixtrail"
+	fix_trailing_chars
+
+	echo "$(/bin/date +%m%d%y-%H%M): Fixing leading spaces in filenames" | /usr/bin/tee -a "$fixlog"
+	/usr/bin/find "${onedrivefolder}" -name " *" -print >"$fixlead"
+	fix_leading_spaces
+
+	# Check OneDrive directory size and filecount after applying name fixes
+
+	afterfix_size=$(/usr/bin/du -sk "$onedrivefolder" | /usr/bin/awk -F '\t' '{print $1}')
+	readonly afterfix_size
+	afterfix_filecount=$(/usr/bin/find "$onedrivefolder" | /usr/bin/wc -l | /usr/bin/sed -e 's/^ *//')
+	readonly afterfix_filecount
+
+	echo "$(/bin/date +%m%d%y-%H%M)"": The OneDrive folder is using ""$afterfix_size"" KB and the file count is ""$afterfix_filecount"" after fixing filenames. Restarting OneDrive." | /usr/bin/tee -a "$fixlog"
+
+	if [[ "$beforefix_filecount" == "$afterfix_filecount" ]]; then
+
+		/usr/local/jamf/bin/jamf displayMessage -message "File names have been corrected. A backup has been placed in FF-Backup-$fixdate in your user folder. The backup will be replaced the next time you correct filenames. You may also delete it, should you need more space."
+
+	else
+
+		/usr/local/jamf/bin/jamf displayMessage -message "Something went wrong. A backup has been placed in FF-Backup-$fixdate in your user folder. Ask IT to help restore the backup."
+
+	fi
+
+}
+
+main
+
+finish
