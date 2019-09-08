@@ -211,7 +211,7 @@ function main() {
 
 		echo "$(date +%m%d%y-%H%M)"": The OneDrive folder is using ""$beforefix_size"" KB and the file count is ""$beforefix_filecount"" before fixing filenames." | tee -a "$fixlog"
 
-		rm -drf "/Users/""$loggedinuser""/FF-Backup-"??????"-"????"
+		rm -drf "/Users/""$loggedinuser""/FF-Backup-"??????"-"????
 		mkdir -p "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
 		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate"
 		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
