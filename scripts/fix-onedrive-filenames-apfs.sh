@@ -1,7 +1,7 @@
 #!/bin/bash
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-###################################################################
+########################################################################################################
 #
 # Jamf Self Service Script to check user's OneDrive folder for illegal
 # characters, leading or trailing spaces and corrects them to 
@@ -10,10 +10,10 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # Modified by soundsnw, January 26, 2020
 #
 # Important: The OneDrive folder name used in your organization 
-# needs to be specified in the script (line 169)
+# needs to be specified in the script (line 171)
 #
 # If you want a slightly faster script, at the cost of not making a backup,
-# comment out or delete line 219-224 and edit the Jamf notifications at the end.
+# comment out or delete line 221-228 and edit the Jamf notifications at the end.
 #
 # Changelog
 # January 26, 2020
@@ -44,12 +44,14 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # - Changed all exit status codes to 0, to keep things looking tidy in Self Service
 # - No longer removes .fstemp files before doing rename operations
 #
-# Version: 0.5
+# Version: 0.6
 #
 # Original script by dsavage:
 # https://github.com/UoE-macOS/jss/blob/master/utilities-fix-file-names.sh
 #
-##################################################################
+# Use of this script is entirely at your own risk, there is no warranty.
+#
+########################################################################################################
 
 set -o pipefail
 
