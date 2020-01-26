@@ -32,5 +32,3 @@ else
     echo "Adding $currentUser to the admin group"
     dseditgroup -o edit -a "$currentUser" -t user admin
 fi
-
-exit 0
