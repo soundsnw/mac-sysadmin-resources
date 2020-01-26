@@ -27,7 +27,7 @@ else
     chmod 600 "/usr/local/tatime"
     # Run Jamf recon to activate the demote script
     echo "Running recon"
-    /usr/local/jamf/bin/jamf recon
+    ( /usr/local/jamf/bin/jamf recon ) & disown
     # Add the user to the admin group
     echo "Adding $currentUser to the admin group"
     dseditgroup -o edit -a "$currentUser" -t user admin
