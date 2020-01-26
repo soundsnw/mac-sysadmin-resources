@@ -7,7 +7,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # Catalina compatible script for Jamf Self Service to grant standard
 # users temporary admin rights.
 #
-# Modified by snowsnd, original code by Armin Briegel
+# Modified by soundsnw, original code by Armin Briegel
 
 # Indicate how long the user should have admin privileges here
 privilegeMinutes=15
