@@ -7,13 +7,18 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # characters, leading or trailing spaces and corrects them to 
 # allow smooth synchronization.
 #
-# Modified by soundsnw, September 8, 2019
+# Modified by soundsnw, January 26, 2020
 #
 # Important: The OneDrive folder name used in your organization 
-# needs to be specified in the script 
-# (line 164)
+# needs to be specified in the script (line 169)
+#
+# If you want a slightly faster script, at the cost of not making a backup,
+# comment out or delete line 219-224 and edit the Jamf notifications at the end.
 #
 # Changelog
+# January 26, 2020
+# - Fixed numerical conditionals in while loops and file number comparisons, corrected quoting.
+#
 # September 8, 2019
 # - Treats directories first
 # - If the corrected filename is used by another file, appends a number at the end to 
@@ -80,7 +85,7 @@ fix_trailing_chars() {
 	linecount="$(wc -l "$fixtrail" | awk '{print $1}')"
 	counter="$linecount"
 
-	while ! [ "$counter" == 0 ]; do
+	while ! [ "$counter" -eq 0 ]; do
 
 		line="$(sed -n "${counter}"p "$fixtrail")"
 		name="$(basename "$line")"
@@ -106,7 +111,7 @@ fix_leading_spaces() {
 	local linecount counter line name path fixedname
 	linecount="$(wc -l "$fixlead" | awk '{print $1}')"
 	counter="$linecount"
-	while ! [ "$counter" == 0 ]; do
+	while ! [ "$counter" -eq 0 ]; do
 
 		line="$(sed -n "${counter}"p "$fixlead")"
 		name="$(basename "$line")"
@@ -132,7 +137,7 @@ fix_names() {
 	local linecount counter line name path fixedname
 	linecount="$(wc -l "$fixchars" | awk '{print $1}')"
 	counter="$linecount"
-	while ! [ "$counter" == 0 ]; do
+	while ! [ "$counter" -eq 0 ]; do
 
 		line="$(sed -n "${counter}"p "$fixchars")"
 		name="$(basename "$line")"
@@ -212,7 +217,7 @@ function main() {
 		echo "$(date +%m%d%y-%H%M)"": The OneDrive folder is using ""$beforefix_size"" KB and the file count is ""$beforefix_filecount"" before fixing filenames." | tee -a "$fixlog"
 
 		rm -drf "/Users/""$loggedinuser""/FF-Backup-"??????"-"????
-		mkdir -p "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate.noindex"
+		mkdir -p "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex"
 		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate"
 		chown "$loggedinuser":staff "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex"
 		touch "/Users/""$loggedinuser""/FF-Backup-""$fixdate""/""$fixdate"".noindex/.metadata_never_index"
@@ -275,7 +280,7 @@ function main() {
 
 	echo "$(date +%m%d%y-%H%M)"": The OneDrive folder is using ""$afterfix_size"" KB and the file count is ""$afterfix_filecount"" after fixing filenames. Restarting OneDrive." | tee -a "$fixlog"
 
-	if [[ "$beforefix_filecount" == "$afterfix_filecount" ]]; then
+	if [[ "$beforefix_filecount" -eq "$afterfix_filecount" ]]; then
 
 		/usr/local/jamf/bin/jamf displayMessage -message "File names have been corrected. A backup has been placed in FF-Backup-$fixdate in your user folder. The backup will be replaced the next time you correct filenames. You may also delete it, should you need more space."
 
