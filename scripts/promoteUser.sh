@@ -22,7 +22,7 @@ if dseditgroup -o checkmember -m "$currentUser" admin; then
     echo "$currentUser is already in the admin group"
 else
     # Create timestamp file
-    "Creating timestamp"
+    echo "Creating timestamp"
     touch "/usr/local/tatime"
     chmod 600 "/usr/local/tatime"
     # Run Jamf recon to activate the demote script
