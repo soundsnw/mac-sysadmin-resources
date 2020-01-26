@@ -10,7 +10,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # Modified by soundsnw, original code by Armin Briegel
 
 # Indicate how long the user should have admin privileges here
-privilegeMinutes=15
+privilegeMinutes=60
 
 # If timestamp file is not present, exit quietly 
 if [[ ! -e /usr/local/tatime ]]; then
