@@ -7,7 +7,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # Catalina compatible script for Jamf Self Service to grant standard
 # users temporary admin rights.
 #
-# Modified by snowsnd, based on code by Armin Briegel
+# Modified by snowsnd, original code by Armin Briegel
 
 currentUser=$(scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }')
 
