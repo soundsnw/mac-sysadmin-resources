@@ -207,7 +207,7 @@ function main() {
 
 	if [ -d "$onedrivefolder" ]; then
 
-		echo "$(date +%m%d%y-%H%M): OneDrive directory is present. Stopping OneDrive." | tee -a "$fixlog"
+		echo "$(date +%m%d%y-%H%M)"": OneDrive directory is present. Stopping OneDrive." | tee -a "$fixlog"
 
 		killall OneDrive || true
 
@@ -238,20 +238,20 @@ function main() {
 
 	# Fix directory filenames
 
-	echo "$(date +%m%d%y-%H%M): Fixing illegal characters in directory names" | tee -a "$fixlog"
+	echo "$(date +%m%d%y-%H%M)"": Fixing illegal characters in directory names" | tee -a "$fixlog"
 	fixchars="$(mktemp)"
 	readonly fixchars
 	find "${onedrivefolder}" -type d -name '*[\\:*?"<>|]*' -print >"$fixchars"
 	fix_names
 
-	echo "$(date +%m%d%y-%H%M): Fixing trailing characters in directory names" | tee -a "$fixlog"
+	echo "$(date +%m%d%y-%H%M)"": Fixing trailing characters in directory names" | tee -a "$fixlog"
 	fixtrail="$(mktemp)"
 	readonly fixtrail
 	find "${onedrivefolder}" -type d -name "* " -print >"$fixtrail"
 	find "${onedrivefolder}" -type d -name "*." -print >>"$fixtrail"
 	fix_trailing_chars
 
-	echo "$(date +%m%d%y-%H%M): Fixing leading spaces in directory names" | tee -a "$fixlog"
+	echo "$(date +%m%d%y-%H%M)"": Fixing leading spaces in directory names" | tee -a "$fixlog"
 	fixlead="$(mktemp)"
 	readonly fixlead
 	find "${onedrivefolder}" -type d -name " *" -print >"$fixlead"
@@ -259,17 +259,17 @@ function main() {
 
 	# Fix all other filenames
 
-	echo "$(date +%m%d%y-%H%M): Fixing illegal characters in filenames" | tee -a "$fixlog"
+	echo "$(date +%m%d%y-%H%M)"": Fixing illegal characters in filenames" | tee -a "$fixlog"
 
 	find "${onedrivefolder}" -name '*[\\:*?"<>|]*' -print >"$fixchars"
 	fix_names
 
-	echo "$(date +%m%d%y-%H%M): Fixing trailing characters in filenames" | tee -a "$fixlog"
+	echo "$(date +%m%d%y-%H%M)"": Fixing trailing characters in filenames" | tee -a "$fixlog"
 	find "${onedrivefolder}" -name "* " -print >"$fixtrail"
 	find "${onedrivefolder}" -name "*." -print >>"$fixtrail"
 	fix_trailing_chars
 
-	echo "$(date +%m%d%y-%H%M): Fixing leading spaces in filenames" | tee -a "$fixlog"
+	echo "$(date +%m%d%y-%H%M)"": Fixing leading spaces in filenames" | tee -a "$fixlog"
 	find "${onedrivefolder}" -name " *" -print >"$fixlead"
 	fix_leading_spaces
 
