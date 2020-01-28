@@ -60,15 +60,13 @@ privilegeSeconds="$((privilegeMinutes * 60))"
 
 # If timestamp exists and the specified time has passed, remove admin
 
-if [[ -e /usr/local/tatime ]] && [[ (( $timeSinceAdmin -gt $privilegeSeconds )) ]]; then
+if [[ -e /usr/local/tatime ]] && [[ (( timeSinceAdmin -gt privilegeSeconds )) ]]; then
 
- 	echo "60 minutes have passed, removing admin"
-	# Remove user from the admin group
-	dseditgroup -o edit -d "$currentUser" -t user admin
+    echo "60 minutes have passed, removing admin"
+    # Remove user from the admin grou
+    dseditgroup -o edit -d "$currentUser" -t user admin
     # Make sure timestamp file is not present and run recon
     mv -vf /usr/local/tatime /usr/local/tatime.old
     /usr/local/jamf/bin/jamf recon
 
 fi
-
-exit 0
