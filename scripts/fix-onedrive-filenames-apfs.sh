@@ -22,7 +22,7 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 # September 8, 2019
 # - Treats directories first
 # - If the corrected filename is used by another file, appends a number at the end to 
-#   avoid overwriting if it is
+#   avoid overwriting
 # - Checks if the number of files before and after renaming is the same
 # - Uses mktemp for temp files
 # - Restarts OneDrive and cleans up temp files if aborted
