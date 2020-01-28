@@ -19,7 +19,7 @@ fi
 
 # Check if the current user already in the admin group
 if dseditgroup -o checkmember -m "$currentUser" admin; then
-    echo "$currentUser is already in the admin group"
+    echo "$currentUser"" is already in the admin group"
 else
     # Create timestamp file
     echo "Creating timestamp"
@@ -29,6 +29,6 @@ else
     echo "Running recon"
     ( /usr/local/jamf/bin/jamf recon ) & disown
     # Add the user to the admin group
-    echo "Adding $currentUser to the admin group"
+    echo "Adding ""$currentUser"" to the admin group"
     dseditgroup -o edit -a "$currentUser" -t user admin
 fi
