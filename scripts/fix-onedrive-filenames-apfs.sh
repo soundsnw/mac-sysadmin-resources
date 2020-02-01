@@ -72,7 +72,7 @@ function finish() {
 	exit 0
 
 }
-trap finish EXIT HUP INT QUIT TERM
+trap finish HUP INT QUIT TERM
 
 # Make sure the machine does not sleep until the script is finished
 
