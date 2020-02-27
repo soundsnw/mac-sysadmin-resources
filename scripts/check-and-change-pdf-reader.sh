@@ -13,7 +13,7 @@ loggedInUser=$(scutil <<<"show State:/Users/ConsoleUser" | awk '/Name :/ && ! /l
 
 # Check if Preview.app is the default PDF reader, exit gracefully if it is
 
-if [[ ! $(/usr/bin/sudo -u "$loggedInUser" /usr/local/bin/swda getUTIs | grep com.adobe.pdf | grep Preview) ]]; then
+if [[ ! $(/usr/bin/sudo -u "$loggedInUser" /usr/local/orgutils/swda getUTIs | grep com.adobe.pdf | grep Preview) ]]; then
     echo "Preview.app is not the default PDF reader."
 else
 	echo "Preview.app is the default PDF reader"
@@ -23,7 +23,7 @@ fi
 # Check OS version and change PDF reader to Preview.app (in a new location on Catalina)
 
 if [[ "$osVersion" -ge 15 ]]; then
-	/usr/bin/sudo -u "loggedInUser" /usr/local/bin/swda setHandler --UTI com.adobe.pdf --app /System/Applications/Preview.app
+	/usr/bin/sudo -u "loggedInUser" /usr/local/orgutils/swda setHandler --UTI com.adobe.pdf --app /System/Applications/Preview.app
 else
-    /usr/bin/sudo -u "loggedInUser" /usr/local/bin/swda setHandler --UTI com.adobe.pdf --app /Applications/Preview.app
+    /usr/bin/sudo -u "loggedInUser" /usr/local/orgutils/swda setHandler --UTI com.adobe.pdf --app /Applications/Preview.app
 fi
