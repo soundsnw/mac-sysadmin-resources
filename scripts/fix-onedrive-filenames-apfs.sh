@@ -118,7 +118,7 @@ fix_leading_spaces() {
 		line="$(sed -n "${counter}"p "$fixlead")"
 		name="$(basename "$line")"
 		path="$(dirname "$line")"
-		fixedname="$(echo "$name" | sed -e 's/^[ \t]*//')"
+		fixedname="$(echo "$name" | sed -e 's/^[ \t]//')"
 
 		if [[ -f "$path"'/'"$fixedname" ]] || [[ -d "$path"'/'"$fixedname" ]]; then
 
